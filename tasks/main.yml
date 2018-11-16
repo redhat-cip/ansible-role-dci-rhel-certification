@@ -32,7 +32,7 @@
 
 - name: Copy copr package
   copy:
-    src: /usr/share/dci/roles/dci-rhel-certification/files/yum-plugin-copr.noarch.rpm
+    src: /usr/share/dci/roles/dci-rhel-certification/files/yum-plugin-copr-1.1.31-45.el7.noarch.rpm
     dest: /opt/
 
 - name: Copy selenium tarball
@@ -51,7 +51,7 @@
     disable_gpg_check: yes
   vars:
     packages:
-    - /opt/yum-plugin-copr.noarch.rpm
+    - /opt/yum-plugin-copr-1.1.31-45.el7.noarch.rpm
     - /opt/redhat-certification-hardware-spicegate-0.1-20181029.el7.noarch.rpm
     - ansible
     - standard-test-roles
