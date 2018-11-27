@@ -22,27 +22,27 @@
 
 - name: Copy HWcert
   copy:
-    src: /usr/share/dci/roles/dci-rhel-certification/files/hwcert-sti
+    src: '{{ role_path }}/files/hwcert-sti'
     dest: /opt/
 
 - name: Copy cert package
   copy:
-    src: /usr/share/dci/roles/dci-rhel-certification/files/redhat-certification-hardware-spicegate-0.1-20181029.el7.noarch.rpm
+    src: '{{ role_path }}/files/redhat-certification-hardware-spicegate-0.1-20181029.el7.noarch.rpm'
     dest: /opt/
 
 - name: Copy copr package
   copy:
-    src: /usr/share/dci/roles/dci-rhel-certification/files/yum-plugin-copr-1.1.31-45.el7.noarch.rpm
+    src: '{{ role_path }}/files/yum-plugin-copr-1.1.31-45.el7.noarch.rpm'
     dest: /opt/
 
 - name: Copy selenium tarball
   copy:
-    src: /usr/share/dci/roles/dci-rhel-certification/files/selenium-3.14.1.tar.gz
+    src: '{{ role_path }}/files/selenium-3.14.1.tar.gz'
     dest: /opt/
 
 - name: Copy importlib tarball
   copy:
-    src: /usr/share/dci/roles/dci-rhel-certification/files/importlib-1.0.4.zip
+    src: '{{ role_path }}/files/importlib-1.0.4.zip'
     dest: /opt/
 
 - name: Install needed packages
