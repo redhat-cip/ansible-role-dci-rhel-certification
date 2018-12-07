@@ -121,12 +121,18 @@
   with_items: "{{ files_to_delete.files }}"
   delegate_to: localhost
 
+- name: Find files to upload
+  find:
+    paths: /tmp/artifacts
+    patterns: '*'
+  register: files_to_fetch
+
 - name: Fetch files from tests
   fetch:
-    src: "{{ item }}"
+    src: "{{ item.path }}"
     dest: /tmp/joblogs-artifacts/
     flat: yes
-  with_fileglob: "/tmp/artifacts/*"
+  with_items: "{{ files_to_fetch.files }}"
 
 - name: Upload logs files to DCI
   dci_file:
