@@ -101,26 +101,6 @@
     chdir: /opt/hwcert-sti
   ignore_errors: yes
 
-- name: Ensure directory exist
-  file:
-    path: /tmp/joblogs-artifacts
-    state: directory
-  delegate_to: localhost
-
-- name: Ansible delete file glob
-  find:
-    paths: /tmp/joblogs-artifacts
-    patterns: '*'
-  register: files_to_delete
-  delegate_to: localhost
-
-- name: Ansible remove file glob
-  file:
-    path: "{{ item.path }}"
-    state: absent
-  with_items: "{{ files_to_delete.files }}"
-  delegate_to: localhost
-
 - name: Find files to upload
   find:
     paths: /tmp/artifacts
@@ -133,20 +113,3 @@
     dest: /tmp/joblogs-artifacts/
     flat: yes
   with_items: "{{ files_to_fetch.files }}"
-
-- name: Upload logs files to DCI
-  dci_file:
-    path: '{{ item }}'
-    name: '{{ item | basename }}'
-    job_id: '{{ hostvars.localhost.job_id }}'
-  with_fileglob: "/tmp/joblogs-artifacts/*"
-  delegate_to: localhost
-
-- name: Upload specific junit files to DCI
-  dci_file:
-    path: '{{ item }}'
-    name: "{{ item | regex_replace('.*.cli.(.*).xml','\\1') }}"
-    job_id: '{{ hostvars.localhost.job_id }}'
-    mime: 'application/junit'
-  with_fileglob: "/tmp/joblogs-artifacts/*.xml"
-  delegate_to: localhost

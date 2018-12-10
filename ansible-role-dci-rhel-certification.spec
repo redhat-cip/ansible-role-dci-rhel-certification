@@ -7,7 +7,6 @@ URL:        https://github.com/redhat-cip/ansible-role-dci-rhel-certification
 Source0:    ansible-role-dci-rhel-certification-%{version}.tar.gz
 
 BuildArch:  noarch
-Requires:   dci-ansible
 
 %description
 An Ansible role that use automated certification test
