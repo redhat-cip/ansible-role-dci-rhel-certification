@@ -15,10 +15,10 @@
 
 - name: Install EPEL
   yum_repository:
-      name: EPEL
-      description: EPEL repo
-      baseurl: '{{ epel_url }}'
-      gpgcheck: no
+    name: EPEL
+    description: EPEL repo
+    baseurl: '{{ epel_url }}'
+    gpgcheck: no
 
 - name: Copy HWcert
   copy:
