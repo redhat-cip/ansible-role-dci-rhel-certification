@@ -4,21 +4,21 @@
     name: hwcert
     description: hwcert YUM repo
     baseurl: http://{{local_repo_ip}}/hwcert
-    gpgcheck: no
+    gpgcheck: false
 
 - name: Install extraOS
   yum_repository:
     name: extraOS
     description: extraos YUM repo
     baseurl: http://{{local_repo_ip}}/extraos
-    gpgcheck: no
+    gpgcheck: false
 
 - name: Install EPEL
   yum_repository:
     name: EPEL
     description: EPEL repo
     baseurl: '{{ epel_url }}'
-    gpgcheck: no
+    gpgcheck: false
 
 - name: Copy files
   copy:
@@ -34,31 +34,31 @@
 - name: Install needed packages
   yum:
     name: "{{ packages }}"
-    disable_gpg_check: yes
+    disable_gpg_check: true
   vars:
     packages:
-    - /opt/yum-plugin-copr-1.1.31-45.el7.noarch.rpm
-    - /opt/redhat-certification-hardware-spicegate-0.1-20181029.el7.noarch.rpm
-    - ansible
-    - standard-test-roles
-    - python2-behave
-    - python-xvfbwrapper
-    - python2-pyyaml
-    - python-paramiko
-    - python-six
-    - unzip
+      - /opt/yum-plugin-copr-1.1.31-45.el7.noarch.rpm
+      - /opt/redhat-certification-hardware-spicegate-0.1-20181029.el7.noarch.rpm
+      - ansible
+      - standard-test-roles
+      - python2-behave
+      - python-xvfbwrapper
+      - python2-pyyaml
+      - python-paramiko
+      - python-six
+      - unzip
 
 - name: Extract Selenium
   unarchive:
     src: /opt/selenium-3.14.1.tar.gz
     dest: /opt/
-    remote_src: yes
+    remote_src: true
 
 - name: Extract importlib
   unarchive:
     src: /opt/importlib-1.0.4.zip
     dest: /opt/
-    remote_src: yes
+    remote_src: true
 
 - name: Install selenium
   command: python setup.py install
@@ -73,7 +73,7 @@
 - name: Create directory for libvirt
   file:
     path: /etc/libvirt/qemu/
-    recurse: yes
+    recurse: true
     state: directory
 
 - name: Create libvirt file to avoid download
@@ -85,7 +85,7 @@
   command: ansible-playbook --tags classic tests.yml
   args:
     chdir: /opt/hwcert-sti
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: Find files to upload
   find:
@@ -97,5 +97,5 @@
   fetch:
     src: "{{ item.path }}"
     dest: /tmp/joblogs-artifacts/
-    flat: yes
+    flat: true
   with_items: "{{ files_to_fetch.files }}"
