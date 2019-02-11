@@ -29,7 +29,6 @@
     - redhat-certification-hardware-spicegate-0.1-20181029.el7.noarch.rpm
     - yum-plugin-copr-1.1.31-45.el7.noarch.rpm
     - selenium-3.14.1.tar.gz
-    - importlib-1.0.4.zip
 
 - name: Install needed packages
   yum:
@@ -54,21 +53,10 @@
     dest: /opt/
     remote_src: yes
 
-- name: Extract importlib
-  unarchive:
-    src: /opt/importlib-1.0.4.zip
-    dest: /opt/
-    remote_src: yes
-
 - name: Install selenium
   command: python setup.py install
   args:
     chdir: /opt/selenium-3.14.1
-
-- name: Install importlib
-  command: python setup.py install
-  args:
-    chdir: /opt/importlib-1.0.4
 
 - name: Create directory for libvirt
   file:
