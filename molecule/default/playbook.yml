@@ -1,0 +1,7 @@
+---
+- name: Converge
+  hosts: all
+  tasks:
+    - import_role:
+        name: ansible-role-dci-rhel-certification
+      become: true
