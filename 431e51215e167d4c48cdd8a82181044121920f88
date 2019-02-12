@@ -1,0 +1,8 @@
+Code-Review+2: Thomas Vassilian <tvassili@redhat.com>
+Workflow+1: Thomas Vassilian <tvassili@redhat.com>
+Verified+2: Zuul CI <zuul@softwarefactory-project.io>
+Submitted-by: Zuul CI <zuul@softwarefactory-project.io>
+Submitted-at: Tue, 12 Feb 2019 15:11:55 +0000
+Reviewed-on: https://softwarefactory-project.io/r/14999
+Project: ansible-role-dci-rhel-certification
+Branch: refs/heads/master
