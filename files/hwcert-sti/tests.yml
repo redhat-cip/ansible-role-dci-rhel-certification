@@ -4,12 +4,12 @@
   roles:
   - role: standard-test-basic
     tags:
-    - classic
+      - classic
     tests:
-    - dci-hwcert:
+      - dci-hwcert:
         dir: "/usr/bin"
         run: dci-hwcert
-    - check_results
-    - submit_logs2beaker
+      - check_results
+      - submit_logs2beaker
     required_packages:
-    - redhat-certification-hardware-spicegate
+      - redhat-certification-hardware-spicegate
