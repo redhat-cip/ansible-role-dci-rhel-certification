@@ -1,0 +1,2 @@
+hwcert_url: 'http://{{local_repo_ip}}/hwcert
+extraos_url: 'http://{{local_repo_ip}}/extraos
