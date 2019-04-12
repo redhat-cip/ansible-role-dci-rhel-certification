@@ -3,14 +3,14 @@
   yum_repository:
     name: hwcert
     description: hwcert YUM repo
-    baseurl: http://{{local_repo_ip}}/hwcert
+    baseurl: "{{ hwcert_url | default('default(http://{{local_repo_ip}}/hwcert') }}"
     gpgcheck: false
 
 - name: Install extraOS
   yum_repository:
     name: extraOS
     description: extraos YUM repo
-    baseurl: http://{{local_repo_ip}}/extraos
+    baseurl: "{{ extraos_url | default('default(http://{{local_repo_ip}}/extraos') }}"
     gpgcheck: false
 
 - name: Install EPEL
