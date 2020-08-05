@@ -1,63 +1,62 @@
 ---
-- name: Install HWCert repos
+- name: Install HWCert repo
   yum_repository:
     name: hwcert
     description: hwcert YUM repo
-    baseurl: http://{{local_repo_ip}}/hwcert
+    baseurl: http://{{ local_repo_ip }}/{{ topic }}/hwcert
     gpgcheck: false
 
-- name: Install extraOS
-  yum_repository:
-    name: extraOS
-    description: extraos YUM repo
-    baseurl: http://{{local_repo_ip}}/extraos
-    gpgcheck: false
+- name: Cert Package Installation RHEL-7
+  block:
+    - name: Copy files
+      copy:
+        src: '{{ role_path }}/files/{{ item }}'
+        dest: /opt/
+      with_items:
+        - hwcert-test-automation-dci-0.2-20200616.el7.noarch.rpm
+        - pytest-4.6.11.tar.gz
+        - pip-20.1.1-py2.py3-none-any.whl
 
-- name: Install EPEL
-  yum_repository:
-    name: EPEL
-    description: EPEL repo
-    baseurl: '{{ epel_url }}'
-    gpgcheck: false
+    - name: Install needed packages (RHEL-7)
+      yum:
+        name: ['redhat-certification-backend', 'redhat-certification-hardware', 'redhat-certification', '/opt/hwcert-test-automation-dci-0.3-20200903.el7.noarch.rpm']
+        disable_gpg_check: true
 
-- name: Copy files
-  copy:
-    src: '{{ role_path }}/files/{{ item }}'
-    dest: /opt/
-  with_items:
-    - hwcert-sti
-    - redhat-certification-hardware-spicegate-0.1-20181029.el7.noarch.rpm
-    - yum-plugin-copr-1.1.31-45.el7.noarch.rpm
-    - selenium-3.14.1.tar.gz
+    - name: Extract pytest install artifacts
+      unarchive:
+        src: /opt/pytest-4.6.11.tar.gz
+        dest: /opt
+        remote_src: yes
 
-- name: Install needed packages
-  yum:
-    name: "{{ packages }}"
-    disable_gpg_check: true
-  vars:
-    packages:
-      - /opt/yum-plugin-copr-1.1.31-45.el7.noarch.rpm
-      - /opt/redhat-certification-hardware-spicegate-0.1-20181029.el7.noarch.rpm
-      - ansible
-      - standard-test-roles
-      - python2-behave
-      - python-xvfbwrapper
-      - python2-pyyaml
-      - python-paramiko
-      - python-six
-      - unzip
+    - name: Install pytest (RHEL-7)
+      shell: cd /opt; python pip-20.1.1-py2.py3-none-any.whl/pip install pytest --no-index --find-links ./
+  when: ansible_distribution_major_version == "7"
 
-- name: Extract Selenium
-  unarchive:
-    src: /opt/selenium-3.14.1.tar.gz
-    dest: /opt/
-    remote_src: true
+- name: Cert Package Installation RHEL-8
+  block:
+    - name: Copy files
+      copy:
+        src: '{{ role_path }}/files/{{ item }}'
+        dest: /opt/
+      with_items:
+        - hwcert-test-automation-dci-0.1-20201007.el8.noarch.rpm
+        - pytest-py3.tar.gz
+        - pip-20.1.1-py2.py3-none-any.whl
 
-- name: Install selenium
-  command: python setup.py install
-  args:
-    chdir: /opt/selenium-3.14.1
-    creates: /usr/lib/python2.7/site-packages/selenium-3.14.1-py2.7.egg
+    - name: Install needed packages (RHEL-8)
+      yum:
+        name: ['redhat-certification-backend', 'redhat-certification-hardware', '/opt/hwcert-test-automation-dci-0.1-20201007.el8.noarch.rpm']
+        disable_gpg_check: true
+
+    - name: Extract pytest install artifacts
+      unarchive:
+        src: /opt/pytest-py3.tar.gz
+        dest: /opt
+        remote_src: yes
+
+    - name: Install pytest (RHEL-8)
+      shell: cd /opt; python3 pip-20.1.1-py2.py3-none-any.whl/pip install pytest --no-index --find-links ./
+  when: ansible_distribution_major_version == "8"
 
 - name: Create directory for libvirt
   file:
@@ -70,22 +69,66 @@
     path: /etc/libvirt/qemu/hwcert-x86_64.xml
     state: touch
 
-- name: Launch test
-  command: ansible-playbook --tags classic tests.yml
-  args:
-    chdir: /opt/hwcert-sti
-  changed_when: false
-  ignore_errors: true
+- name: Start rhcertd service
+  service:
+    name: rhcertd
+    state: started
+
+- name: Update rhcert.xml
+  lineinfile:
+    path: /etc/rhcert.xml
+    regexp: '^  <urls.*>$'
+    line: '  <urls phase="qa">'
+
+- name: Restart rhcertd service
+  service:
+    name: rhcertd
+    state: restarted
+
+- name: Enable SELinux for HWCert tests
+  selinux:
+    policy: targeted
+    state: enforcing
+
+- name: Launch tests
+  shell: hwcert-dci
+
+- name: Put SELinux back in permissive mode
+  selinux:
+    policy: targeted
+    state: permissive
+
+- name: Delete http conf file installed by cert
+  file:
+    path: /etc/httpd/conf.d/rhcert.conf
+    state: absent
+
+- name: Restart httpd service after deleting cert conf file
+  service:
+    name: httpd
+    state: restarted
 
 - name: Find files to upload
   find:
-    paths: /tmp/artifacts
+    paths: /tmp/hwcert_report
     patterns: '*'
   register: files_to_fetch
 
 - name: Fetch files from tests
   fetch:
     src: "{{ item.path }}"
-    dest: /tmp/joblogs-artifacts/
+    dest: "{{ hostvars.localhost.job_logs.path }}/"
     flat: true
   with_items: "{{ files_to_fetch.files }}"
+
+- name: Upload test results file
+  delegate_to: localhost
+  environment:
+    - DCI_CLIENT_ID: "{{ hostvars.localhost.dci_client_id }}"
+    - DCI_API_SECRET: "{{ hostvars.localhost.dci_api_secret }}"
+    - DCI_CS_URL: "{{ hostvars.localhost.dci_cs_url }}"
+  dci_file:
+    path: "{{ hostvars.localhost.job_logs.path }}/hwcert_run_non_int.xml"
+    name: "hwcert"
+    job_id: "{{ hostvars.localhost.job_id }}"
+    mime: "application/junit"
