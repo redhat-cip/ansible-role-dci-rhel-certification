@@ -3,21 +3,7 @@
   yum_repository:
     name: hwcert
     description: hwcert YUM repo
-    baseurl: http://{{local_repo_ip}}/hwcert
-    gpgcheck: false
-
-- name: Install extraOS
-  yum_repository:
-    name: extraOS
-    description: extraos YUM repo
-    baseurl: http://{{local_repo_ip}}/extraos
-    gpgcheck: false
-
-- name: Install EPEL
-  yum_repository:
-    name: EPEL
-    description: EPEL repo
-    baseurl: '{{ epel_url }}'
+    baseurl: http://{{ local_repo_ip }}/{{ topic }}/hwcert
     gpgcheck: false
 
 - name: Copy files
@@ -25,39 +11,33 @@
     src: '{{ role_path }}/files/{{ item }}'
     dest: /opt/
   with_items:
-    - hwcert-sti
-    - redhat-certification-hardware-spicegate-0.1-20181029.el7.noarch.rpm
-    - yum-plugin-copr-1.1.31-45.el7.noarch.rpm
-    - selenium-3.14.1.tar.gz
+    - hwcert-test-automation-dci-0.2-20200616.el7.noarch.rpm
+    - pytest-4.6.11.tar.gz
+    - pip-20.1.1-py2.py3-none-any.whl
 
-- name: Install needed packages
+- name: Install needed packages (RHEL-7)
   yum:
-    name: "{{ packages }}"
+    name: ['redhat-certification-backend', 'redhat-certification-hardware', 'redhat-certification', '/opt/hwcert-test-automation-dci-0.2-20200616.el7.noarch.rpm']
     disable_gpg_check: true
-  vars:
-    packages:
-      - /opt/yum-plugin-copr-1.1.31-45.el7.noarch.rpm
-      - /opt/redhat-certification-hardware-spicegate-0.1-20181029.el7.noarch.rpm
-      - ansible
-      - standard-test-roles
-      - python2-behave
-      - python-xvfbwrapper
-      - python2-pyyaml
-      - python-paramiko
-      - python-six
-      - unzip
+  when: ansible_distribution_major_version == "7"
 
-- name: Extract Selenium
+# NOTE: Provided test package does not work with RHEL-8 currently.
+#       Execution of hwcert tests limited to RHEL-7 clients only in
+#       main agent playbook.
+- name: Install needed packages (RHEL-8)
+  yum:
+    name: ['redhat-certification-backend', 'redhat-certification-hardware', '/opt/hwcert-test-automation-dci-0.2-20200616.el7.noarch.rpm']
+    disable_gpg_check: true
+  when: ansible_distribution_major_version == "8"
+
+- name: Extract pytest install artifacts
   unarchive:
-    src: /opt/selenium-3.14.1.tar.gz
-    dest: /opt/
-    remote_src: true
+    src: /opt/pytest-4.6.11.tar.gz
+    dest: /opt
+    remote_src: yes
 
-- name: Install selenium
-  command: python setup.py install
-  args:
-    chdir: /opt/selenium-3.14.1
-    creates: /usr/lib/python2.7/site-packages/selenium-3.14.1-py2.7.egg
+- name: Install pytest
+  shell: cd /opt; python pip-20.1.1-py2.py3-none-any.whl/pip install pytest --no-index --find-links ./
 
 - name: Create directory for libvirt
   file:
@@ -70,22 +50,54 @@
     path: /etc/libvirt/qemu/hwcert-x86_64.xml
     state: touch
 
-- name: Launch test
-  command: ansible-playbook --tags classic tests.yml
-  args:
-    chdir: /opt/hwcert-sti
-  changed_when: false
-  ignore_errors: true
+- name: Start rhcertd service
+  service:
+    name: rhcertd
+    state: started
+
+- name: Update rhcert.xml
+  lineinfile:
+    path: /etc/rhcert.xml
+    regexp: '^  <urls.*>$'
+    line: '  <urls phase="qa">'
+
+- name: Restart rhcertd service
+  service:
+    name: rhcertd
+    state: restarted
+
+- name: Enable SELinux for HWCert tests
+  selinux:
+    policy: targeted
+    state: enforcing
+
+- name: Launch tests
+  shell: hwcert-dci
+
+- name: Put SELinux back in permissive mode
+  selinux:
+    policy: targeted
+    state: permissive
+
+- name: Delete http conf file installed by cert
+  file:
+    path: /etc/httpd/conf.d/rhcert.conf
+    state: absent
+
+- name: Restart httpd service after deleting cert conf file
+  service:
+    name: httpd
+    state: restarted
 
 - name: Find files to upload
   find:
-    paths: /tmp/artifacts
+    paths: /tmp/hwcert_report
     patterns: '*'
   register: files_to_fetch
 
 - name: Fetch files from tests
   fetch:
     src: "{{ item.path }}"
-    dest: /tmp/joblogs-artifacts/
+    dest: "{{ hostvars.localhost.job_logs.path }}/"
     flat: true
   with_items: "{{ files_to_fetch.files }}"
