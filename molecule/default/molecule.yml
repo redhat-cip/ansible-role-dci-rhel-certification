@@ -11,6 +11,7 @@ platforms:
     image: centos:7
     command: /sbin/init
     privileged: true
+    pre_build_image: true
 provisioner:
   name: ansible
   log: true
@@ -24,7 +25,6 @@ scenario:
     - lint
     - destroy
     - dependency
-    - syntax
     - create
     - prepare
     - destroy
