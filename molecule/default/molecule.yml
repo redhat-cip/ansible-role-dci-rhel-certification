@@ -24,7 +24,6 @@ scenario:
     - lint
     - destroy
     - dependency
-    - syntax
     - create
     - prepare
     - destroy
