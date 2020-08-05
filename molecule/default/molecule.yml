@@ -3,7 +3,7 @@ dependency:
   name: galaxy
   enabled: false
 driver:
-  name: podman
+  name: molecule-podman
 lint: |
   yamllint tasks
 platforms:
@@ -24,7 +24,6 @@ scenario:
     - lint
     - destroy
     - dependency
-    - syntax
     - create
     - prepare
     - destroy
