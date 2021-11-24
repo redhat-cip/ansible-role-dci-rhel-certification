@@ -3,7 +3,7 @@
   yum_repository:
     name: hwcert
     description: hwcert YUM repo
-    baseurl: http://{{ local_repo_ip }}/{{ topic }}/hwcert
+    baseurl: http://{{ local_repo_ip }}/{{ hostvars.localhost.topic_name }}/hwcert
     gpgcheck: false
 
 - name: Cert Package Installation RHEL-7

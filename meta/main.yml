@@ -1,6 +1,7 @@
 ---
 galaxy_info:
-  author: Distributed-CI Team
+  author: dci
+  role_name: ansible_role_dci_rhel_certification
   description: An Ansible role to run the Red Hat RHEL certification test suite
   company: Red Hat
   license: license (Apache)
